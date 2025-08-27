@@ -1,0 +1,4 @@
+# dependencies:
+#     nlohmann_json:
+#         git: https://github.com/nlohmann/json.git
+#         path: include
