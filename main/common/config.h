@@ -36,15 +36,32 @@ enum class EnableLog {
     #define SERVER_ADDRESS "171.246.121.79"
     #define PORT 1883
 
-    // Publisher
-    #define TOPIC_PUB_1 "center/data_sensor"
+    // Publisher 1
+    #define TOPIC_PUB_1 "center/data_sensor_1"
 
-    // Json Pub/Sub format:
     // {
+    //     "bpm": 0,
     //     "spo2": 0.0,
-    //     "bpm": 0.0
     // }
     #define BPM "bpm"
     #define SPO2 "spo2"
+
+    // Publisher 2
+    #define TOPIC_PUB_2 "center/data_sensor_2"
+
+    // {
+    //     "accel_x": 0,
+    //     "accel_y": 0,
+    //     "accel_z": 0,
+    //     "gyro_x": 0,
+    //     "gyro_y": 0,
+    //     "gyro_z": 0,
+    // }
+    #define ACCEL_X "accel_x"
+    #define ACCEL_Y "accel_y"
+    #define ACCEL_Z "accel_z"
+    #define GYRO_X "gyro_x"
+    #define GYRO_Y "gyro_y"
+    #define GYRO_Z "gyro_z"
 
 /* End MQTT config */

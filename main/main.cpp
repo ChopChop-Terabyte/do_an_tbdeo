@@ -1,5 +1,7 @@
 #include <memory>
 #include <string>
+// #include <sstream>
+// #include <iomanip>
 #include <nlohmann/json.hpp>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -51,25 +53,47 @@ extern "C" void app_main(void) {
     max30102_->start();
     mpu6050_->start();
 
+    i2c_->scan_dev_address(I2C_BUS_0);
+
+    uint8_t i = 0;
     while (true) {
-        json json_puber;
+        json json_puber_1;
+        json json_puber_2;
 
-        if (mqtt_->is_connected_ && max30102_->is_new_val()) {
-            json_puber[SPO2] = max30102_->get_spo2();
-            json_puber[BPM] = max30102_->get_heart_rate();
-
-            std::string mess = json_puber.dump();
-
-            mqtt_->publish(mqtt_->client_, TOPIC_PUB_1, mess.c_str());
+        if (!i) {
+            ESP_LOGI(TAG, "[APP] Free memory:           %" PRIu32 " bytes", esp_get_free_heap_size());
+            ESP_LOGI(TAG, "[APP] Internal free heap:    %d bytes", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
         }
 
+        if (mqtt_->is_connected_ && max30102_->is_new_val()) {
+            int bpm_val = max30102_->get_heart_rate();
+            std::ostringstream oss;
+            oss << std::fixed << std::setprecision(2) << max30102_->get_spo2();
+
+            json_puber_1[BPM] = std::to_string(bpm_val);
+            json_puber_1[SPO2] = oss.str();
+
+            std::string mess = json_puber_1.dump();
+
+            mqtt_->publish(mqtt_->client_, TOPIC_PUB_1, mess.c_str());
+            // ESP_LOGW(TAG, "%s", mess.c_str());
+        }
+
+        if (mqtt_->is_connected_ && mpu6050_->is_new_val()) {
+            json_puber_2[ACCEL_X] = std::to_string(mpu6050_->get_accel_x());
+            json_puber_2[ACCEL_Y] = std::to_string(mpu6050_->get_accel_y());
+            json_puber_2[ACCEL_Z] = std::to_string(mpu6050_->get_accel_z());
+            json_puber_2[GYRO_X] = std::to_string(mpu6050_->get_gyro_x());
+            json_puber_2[GYRO_Y] = std::to_string(mpu6050_->get_gyro_y());
+            json_puber_2[GYRO_Z] = std::to_string(mpu6050_->get_gyro_z());
+
+            std::string mess = json_puber_2.dump();
+
+            mqtt_->publish(mqtt_->client_, TOPIC_PUB_2, mess.c_str());
+            // ESP_LOGW(TAG, "%s", mess.c_str());
+        }
+
+        if (i++ > 50) i = 0;
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
-
-    // while (true) {
-    //     ESP_LOGI(TAG, "[APP] Free memory:           %" PRIu32 " bytes", esp_get_free_heap_size());
-    //     ESP_LOGI(TAG, "[APP] Internal free heap:    %d bytes", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
-
-    //     vTaskDelay(5000 / portTICK_PERIOD_MS);
-    // }
 }

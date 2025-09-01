@@ -46,6 +46,25 @@ namespace peripherals {
         init();
     }
 
+    void I2CDriver::scan_dev_address(i2c_port_num_t i2c_port_num) {
+        bool first = true;
+        ESP_LOGI(TAG, "Scanning I2C bus...");
+
+        for (uint8_t addr = 1; addr < 0x7F; addr++) {
+            esp_err_t ret = i2c_master_probe(bus_handle[i2c_port_num], addr, 1000); // timeout = 1000us
+            if (ret == ESP_OK) {
+                if (first) {
+                    first = false;
+                    ESP_LOGI(TAG, "***** I2C address list *****");
+                }
+                ESP_LOGI(TAG, "Found device at 0x%02X", addr);
+            }
+        }
+
+        ESP_LOGI(TAG, "*****     End list     *****");
+        ESP_LOGI(TAG, "Scan done");
+    }
+
     void I2CDriver::add_dev(i2c_port_num_t i2c_port_num, i2c_master_dev_handle_t *dev_handle, uint16_t device_address, uint32_t i2c_freq_hz) {
         i2c_device_config_t dev_config = {
             .dev_addr_length = I2C_ADDR_BIT_LEN_7,

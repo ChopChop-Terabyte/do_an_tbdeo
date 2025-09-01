@@ -108,8 +108,10 @@ namespace devices {
         config(MODE_CONFIG, MAX30102_MULTI_LED);
         config(SPO2_SCALE_CONFIG, 0x47);
 
-        config(LED1_PA, 0x3F);         // LED 1 Pulse Amplitude register (Red led)
-        config(LED2_PA, 0x3F);         // LED 2 Pulse Amplitude register (IR led)
+        // config(LED1_PA, 0x3F);         // LED 1 Pulse Amplitude register (Red led)
+        // config(LED2_PA, 0x3F);         // LED 2 Pulse Amplitude register (IR led)
+        config(LED1_PA, 0x6F);         // LED 1 Pulse Amplitude register (Red led)
+        config(LED2_PA, 0x6F);         // LED 2 Pulse Amplitude register (IR led)
 
         config(SLOT_12, 0x21);         /* Slot 1 RED led (SpO2 measurement) */   /* Slot 2 IR led (Heart rate measurement) */
         config(SLOT_34, 0x00);

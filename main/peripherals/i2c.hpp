@@ -11,6 +11,7 @@ namespace peripherals {
         void init();
         void start();
 
+        void scan_dev_address(i2c_port_num_t i2c_port_num);
         void add_dev(i2c_port_num_t i2c_port_num, i2c_master_dev_handle_t *dev_handle, uint16_t device_address, uint32_t i2c_freq_hz);
         void remove_dev(i2c_master_dev_handle_t dev_handle);
         void write_bytes(i2c_master_dev_handle_t dev_handle,
