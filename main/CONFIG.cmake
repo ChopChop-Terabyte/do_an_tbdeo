@@ -3,11 +3,15 @@ set(SOURCES
 
     core/event_manager.hpp
     core/event_manager.cpp
+    core/sntp.h
+    core/sntp.c
 
     peripherals/gpio.hpp
     peripherals/gpio.cpp
     peripherals/i2c.hpp
     peripherals/i2c.cpp
+    peripherals/spi.hpp
+    peripherals/spi.cpp
     network/net_manager.hpp
     network/net_manager.cpp
     network/wifi/wifi.cpp
@@ -18,4 +22,6 @@ set(SOURCES
     devices/max30102/max30102.cpp
     devices/mpu6050/mpu6050.hpp
     devices/mpu6050/mpu6050.cpp
+    devices/oled/sh1106.hpp
+    devices/oled/sh1106.cpp
 )

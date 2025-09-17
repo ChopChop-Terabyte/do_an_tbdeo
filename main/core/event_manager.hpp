@@ -16,6 +16,7 @@ namespace core {
         BUTTON_SC = 0,
         LED_SC,
         NET_STATUS,
+        BUZZER,
         MAX30102
     };
 

@@ -19,10 +19,11 @@ namespace network {
         init();
 
         xTaskCreate([](void *arg) { static_cast<NetManager *>(arg)->start_task(arg); },
-            "Start net manager task", 1024 * 2, this, 5, NULL
+            "Start net manager task", 1024 * 3, this, 5, NULL
         );
 
         wifi_->start();
+        wifi_->select_mode(WifiMode::STA_MODE);
     }
 
     void NetManager::start_task(void *pvParameters) {

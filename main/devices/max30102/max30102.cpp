@@ -19,11 +19,11 @@ namespace devices {
     static void intr_handle(void *arg) {
         MAX30102 *self = static_cast<MAX30102*>(arg);
         BaseType_t hpw = pdFALSE;
-        vTaskNotifyGiveFromISR(self->sensor_task, &hpw);
+        vTaskNotifyGiveFromISR(self->sensor_task_, &hpw);
         portYIELD_FROM_ISR(hpw);
     }
 
-    MAX30102::MAX30102(peripherals::I2CDriver *i2c_driver, i2c_port_num_t i2c_port_num, uint16_t device_address, uint32_t i2c_freq_hz,
+    MAX30102::MAX30102(peripherals::I2C *i2c_driver, i2c_port_num_t i2c_port_num, uint16_t device_address, uint32_t i2c_freq_hz,
                         EnableLog show_values_log)
                             : i2c_driver_(i2c_driver),
                             i2c_port_num_(i2c_port_num),
@@ -32,9 +32,9 @@ namespace devices {
                             show_values_log_(show_values_log) {}
 
     MAX30102::~MAX30102() {
-        if (sensor_task) {
-            vTaskDelete(sensor_task);
-            sensor_task = nullptr;
+        if (sensor_task_) {
+            vTaskDelete(sensor_task_);
+            sensor_task_ = nullptr;
         }
 
         i2c_driver_->remove_dev(dev_handle_);
@@ -73,7 +73,7 @@ namespace devices {
         init();
 
         xTaskCreatePinnedToCore([](void *arg) { static_cast<MAX30102 *>(arg)->start_task(arg); },
-            "Start MAX30102 task", 1024 * 4, this, 2, &sensor_task, 1
+            "Start MAX30102 task", 1024 * 4, this, 2, &sensor_task_, 1
         );
     }
 

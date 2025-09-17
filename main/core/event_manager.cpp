@@ -34,7 +34,7 @@ namespace core {
     void EventManager::start_task() {
         mess_t ev;
         while (running_) {
-            if (xQueueReceive(queue_, &ev, 100 / portTICK_PERIOD_MS) == pdTRUE) {
+            if (xQueueReceive(queue_, &ev, portMAX_DELAY) == pdTRUE) {
                 std::lock_guard<std::mutex> lock(cb_mutex_);
                 auto it = sub_list_.find(ev.id);
                 if (it != sub_list_.end()) {

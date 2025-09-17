@@ -11,12 +11,14 @@
 #include "common/config.h"
 #include "peripherals/gpio.hpp"
 #include "peripherals/i2c.hpp"
+#include "peripherals/spi.hpp"
 #include "network/net_manager.hpp"
 #include "protocols/mqtt/mqtt.hpp"
 #include "core/event_manager.hpp"
 
 #include "devices/max30102/max30102.hpp"
 #include "devices/mpu6050/mpu6050.hpp"
+#include "devices/oled/sh1106.hpp"
 
 static const char *TAG = "Main task";
 
@@ -28,13 +30,15 @@ using namespace protocols;
 using namespace devices;
 
 auto gpio_ = std::make_unique<GPIO>();
-auto i2c_ = std::make_unique<I2CDriver>(I2C_BUS_0, SDA_PIN, SCL_PIN);
+auto i2c_ = std::make_unique<I2C>(I2C_BUS_0, SDA_PIN, SCL_PIN);
+auto spi_ = std::make_unique<SPI>(SPI_HOST_0, SPI_MOSI, SPI_MISO, SPI_CLK);
 auto net_manager_ = std::make_unique<NetManager>();
 auto mqtt_ = std::make_unique<MQTT>(SERVER_ADDRESS, PORT, MQTT_TRANSPORT_OVER_TCP);
 auto &event_manager_ = EventManager::instance();
 
 auto max30102_ = std::make_unique<MAX30102>(i2c_.get(), I2C_BUS_0, MAX30102_ADDRESS, MAX30102_FREQ_HZ, EnableLog::SHOW_OFF);
 auto mpu6050_ = std::make_unique<MPU6050>(i2c_.get(), I2C_BUS_0, MPU6050_ADDRESS, MPU6050_FREQ_HZ, EnableLog::SHOW_ON);
+auto sh1106_ = std::make_unique<SH1106>(spi_.get(), SPI_HOST_0, SH1106_CS, SH1106_DC, SH1106_RES, SH1106_FREQ_HZ);
 
 extern "C" void app_main(void) {
     esp_err_t ret = nvs_flash_init();
@@ -46,12 +50,14 @@ extern "C" void app_main(void) {
 
     gpio_->start();
     i2c_->start();
+    spi_->start();
     net_manager_->start();
     mqtt_->start();
     event_manager_.start();
 
     max30102_->start();
-    mpu6050_->start();
+    // mpu6050_->start();
+    sh1106_->start();
 
     i2c_->scan_dev_address(I2C_BUS_0);
 
@@ -92,6 +98,11 @@ extern "C" void app_main(void) {
             mqtt_->publish(mqtt_->client_, TOPIC_PUB_2, mess.c_str());
             // ESP_LOGW(TAG, "%s", mess.c_str());
         }
+
+        // int a;
+        // if (i > 40) a = 1;
+        // else a = 0;
+        // event_manager_.publish_intr(EventID::BUZZER, a);
 
         if (i++ > 50) i = 0;
         vTaskDelay(100 / portTICK_PERIOD_MS);

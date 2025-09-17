@@ -9,7 +9,7 @@ namespace devices {
     public:
         TaskHandle_t sensor_task = nullptr;
 
-        MPU6050(peripherals::I2CDriver *i2c_driver, i2c_port_num_t i2c_port_num, uint16_t device_address, uint32_t i2c_freq_hz,
+        MPU6050(peripherals::I2C *i2c_driver, i2c_port_num_t i2c_port_num, uint16_t device_address, uint32_t i2c_freq_hz,
                 EnableLog show_values_log);
         // ~MPU6050();
 
@@ -74,7 +74,7 @@ namespace devices {
         static constexpr uint8_t GYRO_Z_H = 0x47;           // Gyroscope Measurements Z H-bits register
         static constexpr uint8_t GYRO_Z_L = 0x48;           // Gyroscope Measurements Z L-bits register
 
-        peripherals::I2CDriver *i2c_driver_;
+        peripherals::I2C *i2c_driver_;
         i2c_master_dev_handle_t dev_handle_;
         i2c_port_num_t i2c_port_num_;
         uint16_t device_address_;

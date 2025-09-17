@@ -13,10 +13,12 @@ namespace peripherals {
     static bool led_task_running_ = false;
 
     void GPIO::init() {
+        output_config(BUZZER, GPIO_MODE_OUTPUT, GPIO_PULLUP_DISABLE, GPIO_PULLDOWN_DISABLE, GPIO_INTR_DISABLE);
         output_config(LED_SMARTCONFIG, GPIO_MODE_OUTPUT, GPIO_PULLUP_DISABLE, GPIO_PULLDOWN_DISABLE, GPIO_INTR_DISABLE);
         output_config(BUTTON_SMARTCONFIG, GPIO_MODE_INPUT, GPIO_PULLUP_DISABLE, GPIO_PULLDOWN_ENABLE, GPIO_INTR_DISABLE);
 
-        gpio_set_level(LED_SMARTCONFIG, 1);
+        gpio_set_level(LED_SMARTCONFIG, 0);
+        gpio_set_level(BUZZER, 0);
     }
 
     void GPIO::start() {
@@ -33,6 +35,7 @@ namespace peripherals {
         );
 
         ev_gpio.subscribe(EventID::LED_SC, [this](void *data) { this->event_smartconfig_led(data); });
+        ev_gpio.subscribe_intr(EventID::BUZZER, [this](int data) { this->event_buzzer(data); });
         vTaskDelete(NULL);
     }
 
@@ -58,21 +61,43 @@ namespace peripherals {
         gpio_config(&io_conf);
     }
 
+    void pwm_config(uint64_t pwm_pin, ledc_mode_t speed_mode, ledc_timer_bit_t duty_res, ledc_timer_t timer_num, uint32_t freq_hz) {
+        ledc_timer_config_t ledc_timer = {
+            .speed_mode       = speed_mode,
+            .duty_resolution  = duty_res,
+            .timer_num        = timer_num,
+            .freq_hz          = freq_hz,
+            .clk_cfg          = LEDC_AUTO_CLK
+        };
+        ESP_ERROR_CHECK(ledc_timer_config(&ledc_timer));
+
+        ledc_channel_config_t ledc_channel = {
+            .gpio_num       = (int)pwm_pin,
+            .speed_mode     = speed_mode,
+            .channel        = LEDC_CHANNEL_0,
+            .intr_type      = LEDC_INTR_DISABLE,
+            .timer_sel      = timer_num,
+            .duty           = 0,
+            .hpoint         = 0
+        };
+        ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel));
+    }
+
     void GPIO::smartconfig_led_level(LedLevel level) {
         uint32_t delay = 0;
         led_task_running_ = true;
 
         if (level == LedLevel::LEVEL_0) {
-            gpio_set_level(LED_SMARTCONFIG, 1);
+            gpio_set_level(LED_SMARTCONFIG, 0);
             led_task_running_ = false;
             vTaskDelete(NULL);
         } else if (level == LedLevel::LEVEL_1) delay = portMAX_DELAY;
         else if (level == LedLevel::LEVEL_2) delay = 500 / portTICK_PERIOD_MS;
 
         while (true) {
-            gpio_set_level(LED_SMARTCONFIG, 0);
-            vTaskDelay(delay);
             gpio_set_level(LED_SMARTCONFIG, 1);
+            vTaskDelay(delay);
+            gpio_set_level(LED_SMARTCONFIG, 0);
             vTaskDelay(delay);
         }
     }
@@ -107,4 +132,7 @@ namespace peripherals {
         xTaskCreate(task_smartconfig_led, "Start smartconfig led task", 1024, this, 2, &led_task_);
     }
 
+    void GPIO::event_buzzer(int data) {
+        gpio_set_level(BUZZER, data);
+    }
 } // namespace peripherals

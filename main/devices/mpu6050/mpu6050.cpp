@@ -6,7 +6,7 @@ static const char *TAG = "MPU6050";
 namespace devices {
     bool MPU6050::new_val = false;
 
-    MPU6050::MPU6050(peripherals::I2CDriver *i2c_driver, i2c_port_num_t i2c_port_num, uint16_t device_address, uint32_t i2c_freq_hz,
+    MPU6050::MPU6050(peripherals::I2C *i2c_driver, i2c_port_num_t i2c_port_num, uint16_t device_address, uint32_t i2c_freq_hz,
                     EnableLog show_values_log)
                         : i2c_driver_(i2c_driver),
                         i2c_port_num_(i2c_port_num),

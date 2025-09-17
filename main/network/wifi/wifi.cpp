@@ -9,6 +9,7 @@
 #include "peripherals/gpio.hpp"
 #include "network/net_manager.hpp"
 
+static const char *TAG = "WIFI";
 static const char *TAG_STA = "WIFI STA mode";
 static const char *TAG_AP = "WIFI AP mode";
 static const char *TAG_APSTA = "WIFI AP + STA mode";
@@ -188,7 +189,7 @@ namespace network {
         init();
 
         xTaskCreatePinnedToCore([](void *arg) { static_cast<Wifi *>(arg)->start_task(arg); },
-            "Start wifi task", 1024 * 8, this, 3, NULL, 0
+            "Start wifi task", 1024 * 10, this, 5, NULL, 0
         );
     }
 
@@ -243,31 +244,29 @@ namespace network {
         wifi_start = true;
         ESP_ERROR_CHECK(esp_wifi_start());
 
-        if (wifi_mode != WifiMode::AP_MODE) {
+        if (wifi_mode == WifiMode::APSTA_MODE) {
             EventBits_t bits = xEventGroupWaitBits(s_wifi_event_group,
                                                     WIFI_CONNECTED_BIT | WIFI_FAIL_BIT,
                                                     pdFALSE,
                                                     pdFALSE,
                                                     portMAX_DELAY);
 
-            if (wifi_mode == WifiMode::APSTA_MODE) {
-                if (bits & WIFI_CONNECTED_BIT) {
-                    ESP_LOGI(TAG_STA, "connected to ap SSID: %s password: %s",
-                            ESP_WIFI_STA_SSID, ESP_WIFI_STA_PASSWD);
-                    softap_set_dns_addr(esp_netif_ap_,esp_netif_sta_);
-                } else if (bits & WIFI_FAIL_BIT) {
-                    ESP_LOGI(TAG_STA, "Failed to connect to SSID:%s, password:%s",
-                            ESP_WIFI_STA_SSID, ESP_WIFI_STA_PASSWD);
-                } else {
-                    ESP_LOGE(TAG_STA, "UNEXPECTED EVENT");
-                    return;
-                }
+            if (bits & WIFI_CONNECTED_BIT) {
+                ESP_LOGI(TAG_STA, "connected to ap SSID: %s password: %s",
+                        ESP_WIFI_STA_SSID, ESP_WIFI_STA_PASSWD);
+                softap_set_dns_addr(esp_netif_ap_,esp_netif_sta_);
+            } else if (bits & WIFI_FAIL_BIT) {
+                ESP_LOGI(TAG_STA, "Failed to connect to SSID:%s, password:%s",
+                        ESP_WIFI_STA_SSID, ESP_WIFI_STA_PASSWD);
+            } else {
+                ESP_LOGE(TAG_STA, "UNEXPECTED EVENT");
+                return;
+            }
 
-                esp_netif_set_default_netif(esp_netif_sta_);
+            esp_netif_set_default_netif(esp_netif_sta_);
 
-                if (esp_netif_napt_enable(esp_netif_ap_) != ESP_OK) {
-                    ESP_LOGE(TAG_STA, "NAPT not enabled on the netif: %p", esp_netif_ap_);
-                }
+            if (esp_netif_napt_enable(esp_netif_ap_) != ESP_OK) {
+                ESP_LOGE(TAG_STA, "NAPT not enabled on the netif: %p", esp_netif_ap_);
             }
         }
     }

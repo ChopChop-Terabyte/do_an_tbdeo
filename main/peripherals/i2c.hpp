@@ -3,10 +3,10 @@
 #include "driver/i2c_master.h"
 
 namespace peripherals {
-    class I2CDriver {
+    class I2C {
     public:
-        I2CDriver(i2c_port_num_t i2c_port_num, gpio_num_t sda_pin, gpio_num_t scl_pin);
-        ~I2CDriver();
+        I2C(i2c_port_num_t i2c_port_num, gpio_num_t sda_pin, gpio_num_t scl_pin);
+        ~I2C();
 
         void init();
         void start();
@@ -27,6 +27,6 @@ namespace peripherals {
         gpio_num_t sda_pin_;
         gpio_num_t scl_pin_;
 
-    }; // class I2CDriver
+    }; // class I2C
 
 } // namespace peripherals

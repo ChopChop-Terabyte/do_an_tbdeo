@@ -13,9 +13,9 @@
 namespace devices {
     class MAX30102 {
     public:
-        TaskHandle_t sensor_task = nullptr;
+        TaskHandle_t sensor_task_ = nullptr;
 
-        MAX30102(peripherals::I2CDriver *i2c_driver, i2c_port_num_t i2c_port_num, uint16_t device_address, uint32_t i2c_freq_hz,
+        MAX30102(peripherals::I2C *i2c_driver, i2c_port_num_t i2c_port_num, uint16_t device_address, uint32_t i2c_freq_hz,
                 EnableLog show_values_log);
         ~MAX30102();
 
@@ -83,12 +83,12 @@ namespace devices {
     // Temperature chip data
         ////
 
-        peripherals::I2CDriver *i2c_driver_;
-        i2c_master_dev_handle_t dev_handle_;
+        peripherals::I2C *i2c_driver_;
         i2c_port_num_t i2c_port_num_;
         uint16_t device_address_;
         uint32_t i2c_freq_hz_;
         EnableLog show_values_log_;
+        i2c_master_dev_handle_t dev_handle_;
 
         uint8_t trans_buf_[2];
         uint8_t recv_buf_;
