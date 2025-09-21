@@ -14,7 +14,7 @@ namespace peripherals {
 
         void add_dev(spi_host_device_t spi_host, spi_device_handle_t *dev_handle, gpio_num_t cs_pin, int spi_clock_hz);
         // void remove_dev(i2c_master_dev_handle_t dev_handle);
-        void write_bytes(spi_device_handle_t dev_handle, uint8_t *write_buf, size_t write_size);
+        void write_bytes(spi_device_handle_t dev_handle, const uint8_t *write_buf, size_t write_size);
         // void read_bytes(i2c_master_dev_handle_t dev_handle,
         //                             uint8_t *read_buf, size_t read_size);
         // void write_read(i2c_master_dev_handle_t dev_handle,

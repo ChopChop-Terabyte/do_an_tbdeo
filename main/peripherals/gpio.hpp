@@ -26,7 +26,7 @@ namespace peripherals {
         void start_task(void* pvParameters);
         static void output_config(uint64_t gpio_output, gpio_mode_t mode, gpio_pullup_t pullup_en, gpio_pulldown_t pulldown_en, gpio_int_type_t intr_type);
         static void input_config(uint64_t gpio_input, gpio_mode_t mode, gpio_pullup_t pullup_en, gpio_pulldown_t pulldown_en, gpio_int_type_t intr_type);
-        static void pwm_config(uint64_t gpio_input, gpio_mode_t mode, gpio_pullup_t pullup_en, gpio_pulldown_t pulldown_en, gpio_int_type_t intr_type);
+        static void pwm_config(uint64_t pwm_pin, ledc_mode_t speed_mode, ledc_timer_bit_t duty_res, ledc_timer_t timer_num, uint32_t freq_hz);
 
         // GPIO functions
         static void smartconfig_led_level(LedLevel level);

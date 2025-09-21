@@ -36,7 +36,7 @@ auto net_manager_ = std::make_unique<NetManager>();
 auto mqtt_ = std::make_unique<MQTT>(SERVER_ADDRESS, PORT, MQTT_TRANSPORT_OVER_TCP);
 auto &event_manager_ = EventManager::instance();
 
-auto max30102_ = std::make_unique<MAX30102>(i2c_.get(), I2C_BUS_0, MAX30102_ADDRESS, MAX30102_FREQ_HZ, EnableLog::SHOW_OFF);
+auto max30102_ = std::make_unique<MAX30102>(i2c_.get(), I2C_BUS_0, MAX30102_ADDRESS, MAX30102_FREQ_HZ, EnableLog::SHOW_ON);
 auto mpu6050_ = std::make_unique<MPU6050>(i2c_.get(), I2C_BUS_0, MPU6050_ADDRESS, MPU6050_FREQ_HZ, EnableLog::SHOW_ON);
 auto sh1106_ = std::make_unique<SH1106>(spi_.get(), SPI_HOST_0, SH1106_CS, SH1106_DC, SH1106_RES, SH1106_FREQ_HZ);
 
@@ -57,9 +57,10 @@ extern "C" void app_main(void) {
 
     max30102_->start();
     // mpu6050_->start();
+    // vTaskDelay(500 / portTICK_PERIOD_MS);
     sh1106_->start();
 
-    i2c_->scan_dev_address(I2C_BUS_0);
+    // i2c_->scan_dev_address(I2C_BUS_0);
 
     uint8_t i = 0;
     while (true) {
@@ -99,10 +100,10 @@ extern "C" void app_main(void) {
             // ESP_LOGW(TAG, "%s", mess.c_str());
         }
 
-        // int a;
-        // if (i > 40) a = 1;
-        // else a = 0;
-        // event_manager_.publish_intr(EventID::BUZZER, a);
+        int a;
+        if (i > 40) a = 1;
+        else a = 0;
+        event_manager_.publish_intr(EventID::BUZZER, a);
 
         if (i++ > 50) i = 0;
         vTaskDelay(100 / portTICK_PERIOD_MS);

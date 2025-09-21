@@ -14,6 +14,8 @@ namespace devices {
     class MAX30102 {
     public:
         TaskHandle_t sensor_task_ = nullptr;
+        static float spo2_;        // %
+        static int heart_rate_;    // bpm
 
         MAX30102(peripherals::I2C *i2c_driver, i2c_port_num_t i2c_port_num, uint16_t device_address, uint32_t i2c_freq_hz,
                 EnableLog show_values_log);
@@ -31,9 +33,17 @@ namespace devices {
         float get_spo2() { return spo2_; }
         int get_heart_rate() { return heart_rate_; }
 
-        bool is_new_val() {
+        static bool is_new_val() {
             if (new_val) {
                 new_val = false;
+                return true;
+            }
+            return false;
+        }
+
+        static bool is_new_val_1() {
+            if (new_val1) {
+                new_val1 = false;
                 return true;
             }
             return false;
@@ -95,9 +105,8 @@ namespace devices {
 
         std::vector<uint32_t> ir_cache_;
         std::vector<uint32_t> red_cache_;
-        float spo2_ = 0;        // %
-        int heart_rate_ = 0;    // bpm
         static bool new_val;
+        static bool new_val1;
 
         // Timer
         esp_timer_handle_t start_timer_ = nullptr;

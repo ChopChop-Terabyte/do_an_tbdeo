@@ -49,7 +49,7 @@ enum class EnableLog {
 #define SH1106_CS GPIO_NUM_15
 #define SH1106_DC GPIO_NUM_27
 #define SH1106_RES GPIO_NUM_12
-#define SH1106_FREQ_HZ 7000000
+#define SH1106_FREQ_HZ 4000000
 
 /* ----- MQTT config ----- */
     #define SERVER_ADDRESS "171.246.121.79"

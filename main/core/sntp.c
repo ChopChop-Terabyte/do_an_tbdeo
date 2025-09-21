@@ -37,9 +37,9 @@ void get_time(void) {
     min = timeinfo.tm_min;
     hour = timeinfo.tm_hour;
 
-    ESP_LOGI("Time now", "%04d/%02d/%02d %1d %02d:%02d:%02d",
-                        timeinfo.tm_year + 1900, timeinfo.tm_mon, timeinfo.tm_mday, timeinfo.tm_wday,
-                        timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+    // ESP_LOGI("Time now", "%04d/%02d/%02d %1d %02d:%02d:%02d",
+    //                     timeinfo.tm_year + 1900, timeinfo.tm_mon, timeinfo.tm_mday, timeinfo.tm_wday,
+    //                     timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
 }
 
 void sntp_config(void) {

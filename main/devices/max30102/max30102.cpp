@@ -6,6 +6,9 @@ static const char *TAG = "MAX30102";
 using namespace peripherals;
 
 namespace devices {
+    float MAX30102::spo2_ = 0;
+    int MAX30102::heart_rate_ = 0;
+
     GPIO gpio;
     int64_t last_time_beat = 0;
     int64_t last_last_time_beat = 0;
@@ -15,6 +18,7 @@ namespace devices {
     uint64_t last_last_beat = 0;
     uint8_t i = 0;
     bool MAX30102::new_val = false;
+    bool MAX30102::new_val1 = false;
 
     static void intr_handle(void *arg) {
         MAX30102 *self = static_cast<MAX30102*>(arg);
@@ -170,6 +174,7 @@ namespace devices {
             ir_cache_.clear();
             red_cache_.clear();
             new_val = true;
+            new_val1 = true;
         }
     }
 
@@ -177,24 +182,53 @@ namespace devices {
         int filter = 3;
         uint64_t beat = 0;
         std::vector<float> spo2_cache;
+        float low_red = 0;
+        float low_ir = 0;
+        float sum_red = 0;
+        float sum_ir = 0;
+
+        for (int i = 0; i < red_cache_.size(); i++) {
+            sum_red += red_cache_[i];
+        }
+        for (int i = 0; i < ir_cache_.size(); i++) {
+            sum_ir += ir_cache_[i];
+        }
+        float red_dc = sum_red / red_cache_.size();
+        float ir_dc = sum_ir / ir_cache_.size();
 
         for (int i = filter; i < red_cache_.size() - filter; i++) {
-            uint8_t var = 0;
+            uint8_t var1 = 0;
+            uint8_t var2 = 0;
+
             for (int j = -filter; j < filter + 1; j++) {
-                if (red_cache_[i] > red_cache_[i+j]) {
-                    var++;
-
-                    spo2_cache.push_back( (float)ir_cache_[i] / (float)red_cache_[i] );
-                }
+                if (red_cache_[i] < red_cache_[i+j]) var1++;
+                else if (red_cache_[i] > red_cache_[i+j]) var2++;
             }
-            if (var == filter * 2) beat++;
+
+            if (var1 == filter * 2) {
+                low_red = red_cache_[i];
+                low_ir = ir_cache_[i];
+            }
+
+            if (var2 == filter * 2) {
+                beat++;
+                if (low_red && low_ir) {
+                    float red_ac = ((float)red_cache_[i] - low_red);
+                    float ir_ac = ((float)ir_cache_[i] - low_ir);
+
+                    spo2_cache.push_back( (red_ac / red_dc) /
+                                            (ir_ac / ir_dc) );
+                }
+                low_red = 0;
+                low_ir = 0;
+            }
         }
 
-        float sum = 0;
-        for (int i = 0; i < spo2_cache.size(); i++) {
-            sum += spo2_cache[i];
+        float max = spo2_cache[0];
+        for (int i = 1; i < spo2_cache.size(); i++) {
+            if (spo2_cache[i] > max) max = spo2_cache[i];
         }
-        spo2_ = 100 * (sum / spo2_cache.size());
+        spo2_ = max;
 
         if (!last_last_time_beat) heart_rate_ = beat * 60 * 1000000 / (esp_timer_get_time() - last_time_beat);
         else if (!final_last_time_beat) heart_rate_ = (beat + last_beat) * 60 * 1000000 / (esp_timer_get_time() - last_last_time_beat);

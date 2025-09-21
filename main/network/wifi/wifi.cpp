@@ -289,7 +289,7 @@ namespace network {
             } else if(uxBits & ESPTOUCH_DONE_BIT) {
                 esp_smartconfig_stop();
                 smart_conf_start = false;
-                _button_publisher(LedLevel::LEVEL_0);
+                _button_publisher(LedLevel::LEVEL_3);
 
                 ESP_LOGI(TAG_SMART, "smartconfig over");
                 vTaskDelete(NULL);
@@ -305,8 +305,8 @@ namespace network {
     }
 
     void Wifi::stop_smartconfig() {
-        xEventGroupSetBits(s_wifi_event_group, ESPTOUCH_DONE_BIT);
         esp_event_post(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, NULL, 0, portMAX_DELAY);
+        xEventGroupSetBits(s_wifi_event_group, ESPTOUCH_DONE_BIT);
         ESP_LOGI(TAG_SMART, "Smartconfig stopped");
     }
 

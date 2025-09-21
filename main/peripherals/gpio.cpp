@@ -13,7 +13,7 @@ namespace peripherals {
     static bool led_task_running_ = false;
 
     void GPIO::init() {
-        output_config(BUZZER, GPIO_MODE_OUTPUT, GPIO_PULLUP_DISABLE, GPIO_PULLDOWN_DISABLE, GPIO_INTR_DISABLE);
+        pwm_config(BUZZER, LEDC_LOW_SPEED_MODE, LEDC_TIMER_13_BIT, LEDC_TIMER_0, 4000);
         output_config(LED_SMARTCONFIG, GPIO_MODE_OUTPUT, GPIO_PULLUP_DISABLE, GPIO_PULLDOWN_DISABLE, GPIO_INTR_DISABLE);
         output_config(BUTTON_SMARTCONFIG, GPIO_MODE_INPUT, GPIO_PULLUP_DISABLE, GPIO_PULLDOWN_ENABLE, GPIO_INTR_DISABLE);
 
@@ -61,7 +61,7 @@ namespace peripherals {
         gpio_config(&io_conf);
     }
 
-    void pwm_config(uint64_t pwm_pin, ledc_mode_t speed_mode, ledc_timer_bit_t duty_res, ledc_timer_t timer_num, uint32_t freq_hz) {
+    void GPIO::pwm_config(uint64_t pwm_pin, ledc_mode_t speed_mode, ledc_timer_bit_t duty_res, ledc_timer_t timer_num, uint32_t freq_hz) {
         ledc_timer_config_t ledc_timer = {
             .speed_mode       = speed_mode,
             .duty_resolution  = duty_res,
@@ -87,7 +87,7 @@ namespace peripherals {
         uint32_t delay = 0;
         led_task_running_ = true;
 
-        if (level == LedLevel::LEVEL_0) {
+        if (level == LedLevel::LEVEL_0 || level == LedLevel::LEVEL_3) {
             gpio_set_level(LED_SMARTCONFIG, 0);
             led_task_running_ = false;
             vTaskDelete(NULL);
@@ -133,6 +133,19 @@ namespace peripherals {
     }
 
     void GPIO::event_buzzer(int data) {
-        gpio_set_level(BUZZER, data);
+        if (data) {
+            for (uint8_t i = 0; i < 2; i++) {
+                ESP_ERROR_CHECK(ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, 4096));
+                ESP_ERROR_CHECK(ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0));
+                vTaskDelay(100 / portTICK_PERIOD_MS);
+                ESP_ERROR_CHECK(ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, 0));
+                ESP_ERROR_CHECK(ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0));
+                vTaskDelay(100 / portTICK_PERIOD_MS);
+            }
+        } else {
+            ESP_ERROR_CHECK(ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, 0));
+            ESP_ERROR_CHECK(ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0));
+        }
     }
+
 } // namespace peripherals

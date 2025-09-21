@@ -48,7 +48,7 @@ namespace peripherals {
         } else ESP_LOGW(TAG, "SPI host %d is not initialized", spi_host);
     }
 
-    void SPI::write_bytes(spi_device_handle_t dev_handle, uint8_t *write_buf, size_t write_size) {
+    void SPI::write_bytes(spi_device_handle_t dev_handle, const uint8_t *write_buf, size_t write_size) {
         spi_transaction_t trans;
         memset(&trans, 0, sizeof(trans));
 
@@ -56,6 +56,15 @@ namespace peripherals {
         trans.tx_buffer = write_buf;
 
         spi_device_polling_transmit(dev_handle, &trans);
+
+        // for (int i = 0; i < write_size; i++) {
+        //     spi_transaction_t trans;
+        //     memset(&trans, 0, sizeof(trans));
+        //     trans.length = 8;
+        //     trans.tx_buffer = &write_buf[i];
+
+        //     spi_device_polling_transmit(dev_handle, &trans);
+        // }
     }
 
 }
