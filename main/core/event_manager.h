@@ -6,6 +6,7 @@
 #include <mutex>
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
+#include <string>
 
 namespace core {
     // #define MAX_SUBER 10;
@@ -17,7 +18,8 @@ namespace core {
         LED_SC,
         NET_STATUS,
         BUZZER,
-        MAX30102
+        MAX30102,
+        OTA
     };
 
     typedef struct {

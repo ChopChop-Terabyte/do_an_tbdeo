@@ -1,7 +1,7 @@
 #pragma once
 
-#include "peripherals/gpio.hpp"
-#include "peripherals/i2c.hpp"
+#include "peripherals/gpio.h"
+#include "peripherals/i2c.h"
 #include "common/config.h"
 
 namespace devices {

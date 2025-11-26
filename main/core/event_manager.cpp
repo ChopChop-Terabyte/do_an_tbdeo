@@ -1,4 +1,4 @@
-#include "event_manager.hpp"
+#include "event_manager.h"
 
 namespace core {
     EventManager::EventManager(uint8_t queue_length) : queue_length_(queue_length),

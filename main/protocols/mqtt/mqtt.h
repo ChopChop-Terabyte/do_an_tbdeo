@@ -16,8 +16,10 @@ namespace protocols {
         void start();
 
         void start_task(void *pvParameters);
-        void subscribe_list(esp_mqtt_client_handle_t client);
-        int publish(esp_mqtt_client_handle_t client, const char *topic, const char *data);
+        void subscribe_list();
+        int publish(const char *topic, const char *data);
+        void on_data(void *event_data);
+        void info_pub();
 
     private:
         std::string server_address_;

@@ -1,11 +1,18 @@
-#include "mqtt.hpp"
+#include "mqtt.h"
 #include "esp_log.h"
 
+#include "core/event_manager.h"
+#include <nlohmann/json.hpp>
+#include "core/info.h"
 #include "common/config.h"
 
 static const char *TAG = "MQTT server";
 
+using namespace core;
+using json = nlohmann::json;
+
 namespace protocols {
+    auto &ev_mqtt = EventManager::instance();
     bool MQTT::is_connected_ = false;
 
     MQTT::MQTT(std::string server_address, uint32_t port, esp_mqtt_transport_t transport) : server_address_(server_address),
@@ -26,11 +33,15 @@ namespace protocols {
         esp_mqtt_event_handle_t event = reinterpret_cast<esp_mqtt_event_handle_t>(event_data);
         esp_mqtt_client_handle_t client = event->client;
         int msg_id;
+        json data;
+        std::string mess;
+
         switch ((esp_mqtt_event_id_t)event_id) {
         case MQTT_EVENT_CONNECTED:
             ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
             mqtt->is_connected_ = true;
-            mqtt->subscribe_list(client);
+            mqtt->subscribe_list();
+            mqtt->info_pub();
             break;
         case MQTT_EVENT_DISCONNECTED:
             ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
@@ -47,6 +58,7 @@ namespace protocols {
             break;
         case MQTT_EVENT_DATA:
             ESP_LOGI(TAG, "MQTT_EVENT_DATA");
+            mqtt->on_data(event_data);
             printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
             printf("DATA=%.*s\r\n", event->data_len, event->data);
             break;
@@ -89,19 +101,86 @@ namespace protocols {
     void MQTT::start() {
         init();
 
-        // xTaskCreatePinnedToCore([](void *arg) { static_cast<MQTT *>(arg)->start_task(arg); },
-        //     "Start mqtt task", 1024 * 5, this, 3, NULL, 1
-        // );
+        xTaskCreatePinnedToCore([](void *arg) { static_cast<MQTT *>(arg)->start_task(arg); },
+            "Start mqtt task", 1024 * 2, this, 3, NULL, 1
+        );
     }
 
-    void MQTT::start_task(void *pvParameters) {}
+    void MQTT::start_task(void *pvParameters) {
+        json data;
+        std::string mess;
 
-    void MQTT::subscribe_list(esp_mqtt_client_handle_t client) {
-        // esp_mqtt_client_subscribe(client, TOPIC_PUB_1, 0);
+        while (true) {
+            if (is_connected_) {
+                data[PING] = "1";
+                mess = data.dump();
+                publish(TOPIC_CENTER_CONNECT, mess.c_str());
+            }
+
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+        }
     }
 
-    int MQTT::publish(esp_mqtt_client_handle_t client, const char *topic, const char *data) {
-        return esp_mqtt_client_publish(client, topic, data, strlen(data), 0, 0);
+    void MQTT::subscribe_list() {
+        esp_mqtt_client_subscribe(client_, TOPIC_CLIENT_CONNECT, 0);
+        esp_mqtt_client_subscribe(client_, TOPIC_CLIENT_INFO, 0);
+        esp_mqtt_client_subscribe(client_, TOPIC_CLIENT_NOTICE, 0);
+        esp_mqtt_client_subscribe(client_, TOPIC_CLIENT_OTA, 0);
+    }
+
+    int MQTT::publish(const char *topic, const char *data) {
+        return esp_mqtt_client_publish(client_, topic, data, strlen(data), 0, 0);
+    }
+
+    void MQTT::on_data(void *event_data) {
+        esp_mqtt_event_handle_t event = reinterpret_cast<esp_mqtt_event_handle_t>(event_data);
+        esp_mqtt_client_handle_t client = event->client;
+        json data;
+        std::string mess;
+
+        if (strncmp(event->topic, TOPIC_CLIENT_CONNECT, event->topic_len) == 0) {
+            info_pub();
+        } else if (strncmp(event->topic, TOPIC_CLIENT_INFO, event->topic_len) == 0) {
+            std::string data_str(event->data, event->data_len);
+            data = json::parse(data_str);
+
+            p_info.id = data[ID];
+            p_info.name = data[NAME];
+            p_info.gender = data[GENDER];
+            p_info.age = data[AGE];
+            p_info.weight = data[WEIGHT];
+            p_info.height = data[HEIGHT];
+
+            upadte = true;
+            info_pub();
+        } else if (strncmp(event->topic, TOPIC_CLIENT_NOTICE, event->topic_len) == 0) {
+            std::string data_str(event->data, event->data_len);
+            data = json::parse(data_str);
+            int noti = std::stoi(data[NOTICE].get<std::string>());
+
+            ev_mqtt.publish_intr(EventID::BUZZER, noti * 10);
+        } else if (strncmp(event->topic, TOPIC_CLIENT_OTA, event->topic_len) == 0) {
+            std::string data_str(event->data, event->data_len);
+            data = json::parse(data_str);
+            static std::string url = data[URL];
+
+            ev_mqtt.publish(EventID::OTA, &url);
+        }
+    }
+
+    void MQTT::info_pub() {
+        json data;
+        std::string mess;
+
+        data[ID] = p_info.id;
+        data[NAME] = p_info.name;
+        data[GENDER] = p_info.gender;
+        data[AGE] = p_info.age;
+        data[WEIGHT] = p_info.weight;
+        data[HEIGHT] = p_info.height;
+        mess = data.dump();
+
+        publish(TOPIC_CENTER_INFO, mess.c_str());
     }
 
 } // namespace protocols

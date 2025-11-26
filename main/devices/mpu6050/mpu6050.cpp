@@ -1,4 +1,4 @@
-#include "mpu6050.hpp"
+#include "mpu6050.h"
 #include "esp_log.h"
 
 static const char *TAG = "MPU6050";

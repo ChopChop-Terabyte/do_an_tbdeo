@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#include "network/wifi/wifi.hpp"
+#include "network/wifi/wifi.h"
 
 namespace network {
     enum class NetStatus {

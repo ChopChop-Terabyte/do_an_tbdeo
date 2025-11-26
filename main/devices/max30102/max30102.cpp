@@ -1,5 +1,6 @@
-#include "max30102.hpp"
+#include "max30102.h"
 #include "esp_log.h"
+#include <algorithm>
 
 static const char *TAG = "MAX30102";
 
@@ -115,7 +116,7 @@ namespace devices {
         // config(LED1_PA, 0x3F);         // LED 1 Pulse Amplitude register (Red led)
         // config(LED2_PA, 0x3F);         // LED 2 Pulse Amplitude register (IR led)
         config(LED1_PA, 0x6F);         // LED 1 Pulse Amplitude register (Red led)
-        config(LED2_PA, 0x6F);         // LED 2 Pulse Amplitude register (IR led)
+        config(LED2_PA, 0x4F);         // LED 2 Pulse Amplitude register (IR led)
 
         config(SLOT_12, 0x21);         /* Slot 1 RED led (SpO2 measurement) */   /* Slot 2 IR led (Heart rate measurement) */
         config(SLOT_34, 0x00);
@@ -179,7 +180,7 @@ namespace devices {
     }
 
     void MAX30102::caculate() {
-        int filter = 3;
+        int filter = 2;
         uint64_t beat = 0;
         std::vector<float> spo2_cache;
         float low_red = 0;
@@ -216,19 +217,24 @@ namespace devices {
                     float red_ac = ((float)red_cache_[i] - low_red);
                     float ir_ac = ((float)ir_cache_[i] - low_ir);
 
-                    spo2_cache.push_back( (red_ac / red_dc) /
-                                            (ir_ac / ir_dc) );
+                    spo2_cache.push_back( 110 -  25 * ((red_ac / red_dc) / (ir_ac / ir_dc)) );
                 }
                 low_red = 0;
                 low_ir = 0;
             }
         }
 
-        float max = spo2_cache[0];
+        float min = spo2_cache[0];
         for (int i = 1; i < spo2_cache.size(); i++) {
-            if (spo2_cache[i] > max) max = spo2_cache[i];
+            if (spo2_cache[i] < min) min = spo2_cache[i];
         }
-        spo2_ = max;
+        spo2_ = min;
+
+        std::sort(spo2_cache.begin(), spo2_cache.end());
+        float spo2_median = spo2_cache[spo2_cache.size() / 2];
+        static float spo2_filtered = 97.0f;
+        spo2_filtered = spo2_filtered * 0.7f + spo2_median * 0.3f;
+        spo2_ = spo2_filtered;
 
         if (!last_last_time_beat) heart_rate_ = beat * 60 * 1000000 / (esp_timer_get_time() - last_time_beat);
         else if (!final_last_time_beat) heart_rate_ = (beat + last_beat) * 60 * 1000000 / (esp_timer_get_time() - last_last_time_beat);

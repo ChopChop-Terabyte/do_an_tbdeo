@@ -1,9 +1,9 @@
-#include "gpio.hpp"
+#include "gpio.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 
 #include "common/config.h"
-#include "core/event_manager.hpp"
+#include "core/event_manager.h"
 
 using namespace core;
 
@@ -13,12 +13,12 @@ namespace peripherals {
     static bool led_task_running_ = false;
 
     void GPIO::init() {
-        pwm_config(BUZZER, LEDC_LOW_SPEED_MODE, LEDC_TIMER_13_BIT, LEDC_TIMER_0, 4000);
+        pwm_config(BUZZER_PIN, LEDC_LOW_SPEED_MODE, LEDC_TIMER_13_BIT, LEDC_TIMER_0, 4000);
         output_config(LED_SMARTCONFIG, GPIO_MODE_OUTPUT, GPIO_PULLUP_DISABLE, GPIO_PULLDOWN_DISABLE, GPIO_INTR_DISABLE);
-        output_config(BUTTON_SMARTCONFIG, GPIO_MODE_INPUT, GPIO_PULLUP_DISABLE, GPIO_PULLDOWN_ENABLE, GPIO_INTR_DISABLE);
+        output_config(BUTTON_SMARTCONFIG, GPIO_MODE_INPUT, GPIO_PULLUP_ENABLE, GPIO_PULLDOWN_DISABLE, GPIO_INTR_DISABLE);
 
         gpio_set_level(LED_SMARTCONFIG, 0);
-        gpio_set_level(BUZZER, 0);
+        gpio_set_level(BUZZER_PIN, 0);
     }
 
     void GPIO::start() {
@@ -108,7 +108,7 @@ namespace peripherals {
         while (true) {
             if (but_cur != gpio_get_level(BUTTON_SMARTCONFIG)) {
                 but_cur = gpio_get_level(BUTTON_SMARTCONFIG);
-                if (gpio_get_level(BUTTON_SMARTCONFIG)) ev_gpio.publish(EventID::BUTTON_SC);
+                if (!gpio_get_level(BUTTON_SMARTCONFIG)) ev_gpio.publish(EventID::BUTTON_SC);
             }
             vTaskDelay(100 / portTICK_PERIOD_MS);
         }
@@ -133,18 +133,13 @@ namespace peripherals {
     }
 
     void GPIO::event_buzzer(int data) {
-        if (data) {
-            for (uint8_t i = 0; i < 2; i++) {
-                ESP_ERROR_CHECK(ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, 4096));
-                ESP_ERROR_CHECK(ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0));
-                vTaskDelay(100 / portTICK_PERIOD_MS);
-                ESP_ERROR_CHECK(ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, 0));
-                ESP_ERROR_CHECK(ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0));
-                vTaskDelay(100 / portTICK_PERIOD_MS);
-            }
-        } else {
+        for (uint8_t i = 0; i < data; i++) {
+            ESP_ERROR_CHECK(ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, 4096));
+            ESP_ERROR_CHECK(ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0));
+            vTaskDelay(100 / portTICK_PERIOD_MS);
             ESP_ERROR_CHECK(ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, 0));
             ESP_ERROR_CHECK(ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0));
+            vTaskDelay(100 / portTICK_PERIOD_MS);
         }
     }
 

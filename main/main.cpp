@@ -8,17 +8,19 @@
 #include "esp_netif.h"
 #include "esp_log.h"
 
+#include "core/info.h"
 #include "common/config.h"
-#include "peripherals/gpio.hpp"
-#include "peripherals/i2c.hpp"
-#include "peripherals/spi.hpp"
-#include "network/net_manager.hpp"
-#include "protocols/mqtt/mqtt.hpp"
-#include "core/event_manager.hpp"
+#include "peripherals/gpio.h"
+#include "peripherals/i2c.h"
+#include "peripherals/spi.h"
+#include "network/net_manager.h"
+#include "core/ota.h"
+#include "protocols/mqtt/mqtt.h"
+#include "core/event_manager.h"
 
-#include "devices/max30102/max30102.hpp"
-#include "devices/mpu6050/mpu6050.hpp"
-#include "devices/oled/sh1106.hpp"
+#include "devices/max30102/max30102.h"
+#include "devices/mpu6050/mpu6050.h"
+#include "devices/oled/sh1106.h"
 
 static const char *TAG = "Main task";
 
@@ -33,6 +35,7 @@ auto gpio_ = std::make_unique<GPIO>();
 auto i2c_ = std::make_unique<I2C>(I2C_BUS_0, SDA_PIN, SCL_PIN);
 auto spi_ = std::make_unique<SPI>(SPI_HOST_0, SPI_MOSI, SPI_MISO, SPI_CLK);
 auto net_manager_ = std::make_unique<NetManager>();
+auto ota_ = std::make_unique<OTA>();
 auto mqtt_ = std::make_unique<MQTT>(SERVER_ADDRESS, PORT, MQTT_TRANSPORT_OVER_TCP);
 auto &event_manager_ = EventManager::instance();
 
@@ -52,6 +55,7 @@ extern "C" void app_main(void) {
     i2c_->start();
     spi_->start();
     net_manager_->start();
+    ota_->start();
     mqtt_->start();
     event_manager_.start();
 
@@ -65,7 +69,8 @@ extern "C" void app_main(void) {
     uint8_t i = 0;
     while (true) {
         json json_puber_1;
-        json json_puber_2;
+        // json json_puber_2;
+        json_puber_1[ID] = p_info.id;
 
         if (!i) {
             ESP_LOGI(TAG, "[APP] Free memory:           %" PRIu32 " bytes", esp_get_free_heap_size());
@@ -82,28 +87,23 @@ extern "C" void app_main(void) {
 
             std::string mess = json_puber_1.dump();
 
-            mqtt_->publish(mqtt_->client_, TOPIC_PUB_1, mess.c_str());
+            mqtt_->publish(TOPIC_CENTER_SENSOR, mess.c_str());
             // ESP_LOGW(TAG, "%s", mess.c_str());
         }
 
-        if (mqtt_->is_connected_ && mpu6050_->is_new_val()) {
-            json_puber_2[ACCEL_X] = std::to_string(mpu6050_->get_accel_x());
-            json_puber_2[ACCEL_Y] = std::to_string(mpu6050_->get_accel_y());
-            json_puber_2[ACCEL_Z] = std::to_string(mpu6050_->get_accel_z());
-            json_puber_2[GYRO_X] = std::to_string(mpu6050_->get_gyro_x());
-            json_puber_2[GYRO_Y] = std::to_string(mpu6050_->get_gyro_y());
-            json_puber_2[GYRO_Z] = std::to_string(mpu6050_->get_gyro_z());
+        // if (mqtt_->is_connected_ && mpu6050_->is_new_val()) {
+        //     json_puber_2[ACCEL_X] = std::to_string(mpu6050_->get_accel_x());
+        //     json_puber_2[ACCEL_Y] = std::to_string(mpu6050_->get_accel_y());
+        //     json_puber_2[ACCEL_Z] = std::to_string(mpu6050_->get_accel_z());
+        //     json_puber_2[GYRO_X] = std::to_string(mpu6050_->get_gyro_x());
+        //     json_puber_2[GYRO_Y] = std::to_string(mpu6050_->get_gyro_y());
+        //     json_puber_2[GYRO_Z] = std::to_string(mpu6050_->get_gyro_z());
 
-            std::string mess = json_puber_2.dump();
+        //     std::string mess = json_puber_2.dump();
 
-            mqtt_->publish(mqtt_->client_, TOPIC_PUB_2, mess.c_str());
-            // ESP_LOGW(TAG, "%s", mess.c_str());
-        }
-
-        int a;
-        if (i > 40) a = 1;
-        else a = 0;
-        event_manager_.publish_intr(EventID::BUZZER, a);
+        //     mqtt_->publish(mqtt_->client_, TOPIC_CENTER_CONNECT, mess.c_str());
+        //     // ESP_LOGW(TAG, "%s", mess.c_str());
+        // }
 
         if (i++ > 50) i = 0;
         vTaskDelay(100 / portTICK_PERIOD_MS);

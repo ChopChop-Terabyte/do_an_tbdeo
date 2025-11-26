@@ -1,4 +1,4 @@
-#include "i2c.hpp"
+#include "i2c.h"
 #include "esp_log.h"
 
 static const char *TAG = "I2C";

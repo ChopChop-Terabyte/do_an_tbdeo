@@ -19,7 +19,7 @@ enum class EnableLog {
 // #define ESP_WIFI_STA_PASSWD "pipipipi"
 #define ESP_MAXIMUM_RETRY 5
 
-#define BUZZER GPIO_NUM_18
+#define BUZZER_PIN GPIO_NUM_18
 #define LED_SMARTCONFIG GPIO_NUM_2
 #define BUTTON_SMARTCONFIG GPIO_NUM_5
 
@@ -52,35 +52,63 @@ enum class EnableLog {
 #define SH1106_FREQ_HZ 4000000
 
 /* ----- MQTT config ----- */
-    #define SERVER_ADDRESS "171.246.121.79"
+    #define SERVER_ADDRESS "nghiadev.ddns.net"
     #define PORT 1883
 
     // Publisher 1
-    #define TOPIC_PUB_1 "center/data_sensor_1"
-
     // {
-    //     "bpm": "0",
-    //     "spo2": "0.0",
+    //     "ping": "1"
     // }
+    #define TOPIC_CENTER_CONNECT "center/connect"
+    // {
+    //     "id": "000000",
+    //     "name": "",
+    //     "gender": "",
+    //     "age": "0",
+    //     "weight": "0.0",
+    //     "height": "0.0"
+    // }
+    #define TOPIC_CENTER_INFO "center/data_info_1"
+    // {
+    //     "id": "000000",
+    //     "bpm": "0",
+    //     "spo2": "0.0"
+    // }
+    #define TOPIC_CENTER_SENSOR "center/data_sensor_1"
+
+    // Subscriber 1
+    // {
+    //     "ping": "1"
+    // }
+    #define TOPIC_CLIENT_CONNECT "client/connect"
+    // {
+    //     "id": "000000",
+    //     "name": "",
+    //     "gender": "",
+    //     "age": "0",
+    //     "weight": "0.0",
+    //     "height": "0.0"
+    // }
+    #define TOPIC_CLIENT_INFO "client/data_info_1"
+    // {
+    //     "notice": "0"
+    // }
+    #define TOPIC_CLIENT_NOTICE "client/notice"
+    // {
+    //     "url": "https://github.com/ChopChop-Terabyte/firmware_ota/releases/download/firdmware_esp32/tb_deo_error.bin"
+    // }
+    #define TOPIC_CLIENT_OTA "client/ota"
+
+    #define PING "ping"
+    #define ID "id"
     #define BPM "bpm"
     #define SPO2 "spo2"
-
-    // Publisher 2
-    #define TOPIC_PUB_2 "center/data_sensor_2"
-
-    // {
-    //     "accel_x": "0",
-    //     "accel_y": "0",
-    //     "accel_z": "0",
-    //     "gyro_x": "0",
-    //     "gyro_y": "0",
-    //     "gyro_z": "0",
-    // }
-    #define ACCEL_X "accel_x"
-    #define ACCEL_Y "accel_y"
-    #define ACCEL_Z "accel_z"
-    #define GYRO_X "gyro_x"
-    #define GYRO_Y "gyro_y"
-    #define GYRO_Z "gyro_z"
+    #define NAME "name"
+    #define GENDER "gender"
+    #define AGE "age"
+    #define WEIGHT "weight"
+    #define HEIGHT "height"
+    #define NOTICE "notice"
+    #define URL "url"
 
 /* End MQTT config */

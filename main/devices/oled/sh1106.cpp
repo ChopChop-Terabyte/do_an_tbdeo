@@ -1,9 +1,10 @@
-#include "sh1106.hpp"
+#include "sh1106.h"
 #include "esp_log.h"
 #include "string.h"
 
-#include "core/event_manager.hpp"
-#include "devices/max30102/max30102.hpp"
+#include "core/info.h"
+#include "core/event_manager.h"
+#include "devices/max30102/max30102.h"
 #include "font_oled.h"
 
 static const char *TAG = "SH1106";
@@ -52,6 +53,9 @@ namespace devices {
         xTaskCreatePinnedToCore([](void *arg) { static_cast<SH1106 *>(arg)->time_clock_task(arg); },
             "Start time clock task", 1024 * 8, this, 10, &time_clock_task_, 0
         );
+        // xTaskCreatePinnedToCore(,
+        //     "Start time clock task", 1024 * 8, this, 10, &time_clock_task_, 0
+        // );
     }
 
     void SH1106::time_clock_task(void *pvParameters) {
@@ -71,9 +75,11 @@ namespace devices {
                     set_cursor(0, 113);
                     data_tran(close_eyes, sizeof(close_eyes));
                     render_text(0, 2, 0, (uint8_t *)"BPM :       bpm");
-                    render_text(0, 4, 0, (uint8_t *)"SPO2:       \%");
-                    render_text(0, 6, 19, (uint8_t *)"Huynh Dai Nghia");
-                    render_text(0, 7, 22, (uint8_t *)"Tran Vinh Phat");
+                    render_text(0, 3, 0, (uint8_t *)"SPO2:       \%");
+                    render_text(0, 6, 0, (uint8_t *)"Age: ");
+                    render_text(0, 6, 66, (uint8_t *)"W:      kg");
+                    render_text(0, 7, 0, (uint8_t *)"Gender: ");
+                    render_text(0, 7, 66, (uint8_t *)"H:      m");
                 }
 
                 if (is_net_connected_) {
@@ -86,8 +92,14 @@ namespace devices {
                         data_tran(open_eyes, sizeof(open_eyes));
                     }
                 } else {
+                    set_cursor(0, 113);
                     data_tran(close_eyes, sizeof(close_eyes));
                     vTaskDelay(100 / portTICK_PERIOD_MS);
+                }
+
+                if (upadte) {
+                    upadte = false;
+                    clean_data();
                 }
 
                 get_time();
@@ -96,11 +108,27 @@ namespace devices {
                 snprintf(buffer, 6, "%02d:%02d", hour, min);
                 render_text(0, 0, 71, (uint8_t *)buffer);
 
+                if (p_info.name == "-NO_DATA") render_text(0, 5, 0, (uint8_t *)"NO NAME");
+                else render_text(0, 5, 0, (uint8_t *)p_info.name.c_str());
+
+                if (p_info.gender == "Male") render_text(0, 7, 48, (uint8_t *)"M");
+                else if (p_info.gender == "Female") render_text(0, 7, 48, (uint8_t *)"F");
+                else render_text(0, 7, 48, (uint8_t *)"");
+
+                int w = std::stof(p_info.weight);
+                float h = std::stof(p_info.height);
+
+                render_text(0, 6, 30, (uint8_t *)p_info.age.c_str());
+                snprintf(buffer, 4, "%d", w);
+                render_text(0, 6, 84, (uint8_t *)buffer);
+                snprintf(buffer, 5, "%.2f", h);
+                render_text(0, 7, 84, (uint8_t *)buffer);
+
                 if (MAX30102::is_new_val_1()) {
                     snprintf(buffer, 16, "%5d", MAX30102::heart_rate_);
                     render_text(0, 2, 36, (uint8_t *)buffer);
                     snprintf(buffer, 16, "%3.2f", MAX30102::spo2_);
-                    render_text(0, 4, 36, (uint8_t *)buffer);
+                    render_text(0, 3, 36, (uint8_t *)buffer);
                 }
 
                 vTaskDelay(750 / portTICK_PERIOD_MS);
@@ -243,6 +271,19 @@ namespace devices {
         // data_tran(p1, 10);
         // set_cursor(6, 59);
         // data_tran(p2, 10);
+    }
+
+    void SH1106::clean_data() {
+        uint8_t cl[133];
+
+        memset(cl, ' ', 132);
+        cl[133] = 0;
+        render_text(0, 5, 0, cl);
+
+        cl[5] = 0;
+        render_text(0, 6, 84, cl);
+        cl[3] = 0;
+        render_text(0, 6, 30, cl);
     }
 
     void SH1106::event_smartconfig_screen(void *data) {

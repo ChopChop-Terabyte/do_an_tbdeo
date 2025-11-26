@@ -1,4 +1,4 @@
-#include "spi.hpp"
+#include "spi.h"
 #include "esp_log.h"
 
 #include <string.h>

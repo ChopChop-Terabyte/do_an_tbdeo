@@ -1,7 +1,7 @@
 #pragma once
 
 #include "driver/spi_master.h"
-#include "peripherals/gpio.hpp"
+#include "peripherals/gpio.h"
 
 namespace peripherals {
     class SPI {

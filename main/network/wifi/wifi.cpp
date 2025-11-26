@@ -1,13 +1,13 @@
-#include "wifi.hpp"
+#include "wifi.h"
 #include <cstring>
 #include <memory>
 #include "esp_mac.h"
 #include "esp_log.h"
 
 #include "common/config.h"
-#include "core/event_manager.hpp"
-#include "peripherals/gpio.hpp"
-#include "network/net_manager.hpp"
+#include "core/event_manager.h"
+#include "peripherals/gpio.h"
+#include "network/net_manager.h"
 
 static const char *TAG = "WIFI";
 static const char *TAG_STA = "WIFI STA mode";

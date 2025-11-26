@@ -1,9 +1,9 @@
 #pragma once
 
-#include "peripherals/spi.hpp"
-#include "peripherals/gpio.hpp"
+#include "peripherals/spi.h"
+#include "peripherals/gpio.h"
 #include "core/sntp.h"
-#include "network/net_manager.hpp"
+#include "network/net_manager.h"
 
 using namespace peripherals;
 using namespace network;
@@ -27,6 +27,7 @@ namespace devices {
         void clean();
         void render_text(uint8_t font, uint8_t page, uint8_t col, const uint8_t *data);
         void render(const uint8_t *pic);
+        void clean_data();
         void icon_loading(uint8_t icon_num);
 
         void event_smartconfig_screen(void *data);
