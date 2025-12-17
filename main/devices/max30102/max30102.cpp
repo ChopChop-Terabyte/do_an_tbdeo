@@ -217,18 +217,26 @@ namespace devices {
                     float red_ac = ((float)red_cache_[i] - low_red);
                     float ir_ac = ((float)ir_cache_[i] - low_ir);
 
-                    spo2_cache.push_back( 110 -  25 * ((red_ac / red_dc) / (ir_ac / ir_dc)) );
+                    float red_ratio = std::max(0.01f, std::min(red_ac / red_dc, 2.0f));
+                    float ir_ratio  = std::max(0.01f, std::min(ir_ac / ir_dc, 2.0f));
+
+                    float spo2_val = 110 - 25 * (red_ratio / ir_ratio);
+
+                    if (spo2_val > 100.0f) spo2_val = 100.0f;
+                    if (spo2_val < 90.0f)  spo2_val = 90.0f;
+
+                    spo2_cache.push_back(spo2_val);
                 }
                 low_red = 0;
                 low_ir = 0;
             }
         }
 
-        float min = spo2_cache[0];
+        float max = spo2_cache[0];
         for (int i = 1; i < spo2_cache.size(); i++) {
-            if (spo2_cache[i] < min) min = spo2_cache[i];
+            if (spo2_cache[i] > max) max = spo2_cache[i];
         }
-        spo2_ = min;
+        spo2_ = max;
 
         std::sort(spo2_cache.begin(), spo2_cache.end());
         float spo2_median = spo2_cache[spo2_cache.size() / 2];

@@ -30,7 +30,7 @@ void get_time(void) {
     localtime_r(&now, &timeinfo);
     wday = timeinfo.tm_wday;
     mday = timeinfo.tm_mday;
-    mon = timeinfo.tm_mon;
+    mon = timeinfo.tm_mon + 1;
     year = timeinfo.tm_year + 1900;
 
     sec = timeinfo.tm_sec;

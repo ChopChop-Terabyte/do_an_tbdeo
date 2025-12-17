@@ -278,7 +278,7 @@ namespace network {
         ESP_ERROR_CHECK(esp_smartconfig_set_type(SC_TYPE_ESPTOUCH));
         ESP_ERROR_CHECK(esp_smartconfig_start(&cfg));
         while (1) {
-            uxBits = xEventGroupWaitBits(s_wifi_event_group, ESPTOUCH_START_BIT | WIFI_CONNECTED_BIT | ESPTOUCH_DONE_BIT, true, false, portMAX_DELAY);
+            uxBits = xEventGroupWaitBits(s_wifi_event_group, ESPTOUCH_START_BIT | WIFI_CONNECTED_BIT | ESPTOUCH_DONE_BIT, pdTRUE, pdFALSE, portMAX_DELAY);
             if (uxBits & ESPTOUCH_START_BIT) {
                 smart_conf_start = true;
                 _button_publisher(LedLevel::LEVEL_2);
@@ -289,6 +289,7 @@ namespace network {
             } else if(uxBits & ESPTOUCH_DONE_BIT) {
                 esp_smartconfig_stop();
                 smart_conf_start = false;
+                smart_conf_toggle = false;
                 _button_publisher(LedLevel::LEVEL_3);
 
                 ESP_LOGI(TAG_SMART, "smartconfig over");

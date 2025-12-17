@@ -158,7 +158,7 @@ namespace protocols {
             data = json::parse(data_str);
             int noti = std::stoi(data[NOTICE].get<std::string>());
 
-            ev_mqtt.publish_intr(EventID::BUZZER, noti * 10);
+            ev_mqtt.publish_intr(EventID::BUZZER, noti);
         } else if (strncmp(event->topic, TOPIC_CLIENT_OTA, event->topic_len) == 0) {
             std::string data_str(event->data, event->data_len);
             data = json::parse(data_str);

@@ -11,8 +11,8 @@ enum class EnableLog {
 #define MAX_STA_CONN 10
 #define ESP_WIFI_STA_SSID "Quynh"
 #define ESP_WIFI_STA_PASSWD "01886955488Qu@."
-// #define ESP_WIFI_STA_SSID "Mong Linh"
-// #define ESP_WIFI_STA_PASSWD "CamViet123"
+// #define ESP_WIFI_STA_SSID "SKYTECH"
+// #define ESP_WIFI_STA_PASSWD "SKYTECH2025"
 // #define ESP_WIFI_STA_SSID "Nokia"
 // #define ESP_WIFI_STA_PASSWD "bonsochin"
 // #define ESP_WIFI_STA_SSID "Pinvis"
