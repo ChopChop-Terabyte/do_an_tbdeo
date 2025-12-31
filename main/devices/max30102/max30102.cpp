@@ -113,10 +113,8 @@ namespace devices {
         config(MODE_CONFIG, MAX30102_MULTI_LED);
         config(SPO2_SCALE_CONFIG, 0x47);
 
-        // config(LED1_PA, 0x3F);         // LED 1 Pulse Amplitude register (Red led)
-        // config(LED2_PA, 0x3F);         // LED 2 Pulse Amplitude register (IR led)
-        config(LED1_PA, 0x6F);         // LED 1 Pulse Amplitude register (Red led)
-        config(LED2_PA, 0x4F);         // LED 2 Pulse Amplitude register (IR led)
+        config(LED2_PA, 0x5F);         // LED 2 Pulse Amplitude register (Red led)
+        config(LED1_PA, 0x6F);         // LED 1 Pulse Amplitude register (IR led)
 
         config(SLOT_12, 0x21);         /* Slot 1 RED led (SpO2 measurement) */   /* Slot 2 IR led (Heart rate measurement) */
         config(SLOT_34, 0x00);
@@ -149,10 +147,10 @@ namespace devices {
         ir_ = ((data[0] & 0x03) << 16) | ((data[1] << 8) | data[2]);
         red_ = ((data[3] & 0x03) << 16) | ((data[4] << 8) | data[5]);
 
-        // ESP_LOGW(TAG, "%ld", ir_);
         // ESP_LOGW(TAG, "%ld", red_);
+        // ESP_LOGW(TAG, "%ld", ir_);
 
-        if (red_ >= 50000 && ir_ >= 50000) {
+        if (red_ >= 80000 && ir_ >= 60000) {
             ir_cache_.push_back(ir_);
             red_cache_.push_back(red_);
         } else {
@@ -188,12 +186,9 @@ namespace devices {
         float sum_red = 0;
         float sum_ir = 0;
 
-        for (int i = 0; i < red_cache_.size(); i++) {
-            sum_red += red_cache_[i];
-        }
-        for (int i = 0; i < ir_cache_.size(); i++) {
-            sum_ir += ir_cache_[i];
-        }
+        for (float v : red_cache_) sum_red += v;
+        for (float v : ir_cache_)  sum_ir  += v;
+
         float red_dc = sum_red / red_cache_.size();
         float ir_dc = sum_ir / ir_cache_.size();
 
@@ -217,13 +212,22 @@ namespace devices {
                     float red_ac = ((float)red_cache_[i] - low_red);
                     float ir_ac = ((float)ir_cache_[i] - low_ir);
 
-                    float red_ratio = std::max(0.01f, std::min(red_ac / red_dc, 2.0f));
-                    float ir_ratio  = std::max(0.01f, std::min(ir_ac / ir_dc, 2.0f));
+                    float red_ratio = std::min(0.0025f, std::max(red_ac / red_dc, 0.001f));
+                    float ir_ratio  = std::min(0.0025f, std::max(ir_ac / ir_dc, 0.001f));
+                    // float red_ratio = std::max(red_ac / red_dc, 0.001f);
+                    // float ir_ratio  = std::max(ir_ac / ir_dc, 0.0025f);
+                    // float red_ratio = red_ac / red_dc;
+                    // float ir_ratio  = ir_ac / ir_dc;
+                    float r  = red_ratio / ir_ratio;
 
-                    float spo2_val = 110 - 25 * (red_ratio / ir_ratio);
+                    // ESP_LOGE(TAG, "%f", red_ratio);
+                    // ESP_LOGE(TAG, "%f", ir_ratio);
+                    ESP_LOGE(TAG, "%f", r);
 
-                    if (spo2_val > 100.0f) spo2_val = 100.0f;
-                    if (spo2_val < 90.0f)  spo2_val = 90.0f;
+                    float spo2_val = 110 - 25 * r;
+
+                    // if (spo2_val > 100.0f) spo2_val = 100.0f;
+                    // if (spo2_val < 90.0f)  spo2_val = 90.0f;
 
                     spo2_cache.push_back(spo2_val);
                 }
@@ -232,16 +236,22 @@ namespace devices {
             }
         }
 
-        float max = spo2_cache[0];
-        for (int i = 1; i < spo2_cache.size(); i++) {
-            if (spo2_cache[i] > max) max = spo2_cache[i];
-        }
-        spo2_ = max;
+        // float max = spo2_cache[0];
+        // for (float v : spo2_cache) if (v > max) max = v;
+        // // for (int i = 1; i < spo2_cache.size(); i++) {
+        // //     if (spo2_cache[i] > max) max = spo2_cache[i];
+        // // }
+        // spo2_ = max;
 
-        std::sort(spo2_cache.begin(), spo2_cache.end());
+        // std::sort(spo2_cache.begin(), spo2_cache.end());
+        // float sum = 0;
+        // for (int i = spo2_cache.size() / 2; i < spo2_cache.size(); i++) sum += spo2_cache[i];
+        // // for (float v : spo2_cache) if (v >= 85) sum += v;
+        // spo2_ = sum / (spo2_cache.size() * 2);
+
         float spo2_median = spo2_cache[spo2_cache.size() / 2];
         static float spo2_filtered = 97.0f;
-        spo2_filtered = spo2_filtered * 0.7f + spo2_median * 0.3f;
+        spo2_filtered = std::min(100.0f, spo2_filtered * 0.8f + spo2_median * 0.23f);
         spo2_ = spo2_filtered;
 
         if (!last_last_time_beat) heart_rate_ = beat * 60 * 1000000 / (esp_timer_get_time() - last_time_beat);
@@ -256,8 +266,8 @@ namespace devices {
         last_time_beat = esp_timer_get_time();
 
         if (show_values_log_ == EnableLog::SHOW_ON) {
-            ESP_LOGW(TAG, "%f", get_spo2());
             ESP_LOGW(TAG, "%d", get_heart_rate());
+            ESP_LOGW(TAG, "%f", get_spo2());
         }
     }
 
